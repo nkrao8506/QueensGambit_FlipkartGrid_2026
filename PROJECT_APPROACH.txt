@@ -1,0 +1,88 @@
+Flipkart Grid Hackathon - Demand Prediction Approach
+
+Team Workflow Summary
+- Objective: predict demand for each row in the provided test set.
+- Primary model used for final submission: LightGBM regressor.
+- Notebook used for end-to-end experiments and training: main2.ipynb.
+
+Data Sources
+- Training data: dataset/train.csv
+- Test data: dataset/test.csv
+- Submission template reference: dataset/sample_submission.csv
+
+Tools and Libraries Used
+- Python 3.13 environment managed with uv
+- Core data processing: pandas, numpy
+- Modeling and preprocessing: scikit-learn
+- Gradient boosting model: lightgbm
+- EDA/visualization (supporting analysis): seaborn, matplotlib
+- Notebook workflow: Jupyter notebook (main2.ipynb)
+
+Feature Engineering and Preprocessing
+1. Geospatial feature extraction from geohash
+- Converted geohash strings into latitude and longitude using an in-notebook decoder.
+- Added numeric features:
+  - geo_lat
+  - geo_lon
+- Dropped raw geohash after decoding for model input.
+
+2. Time feature extraction
+- Parsed timestamp values in HH:MM style.
+- Added:
+  - hour
+  - minute
+  - minute_of_day
+  - minute_of_day_sin
+  - minute_of_day_cos
+- Cyclical encoding (sin/cos) helps model periodic traffic behavior.
+
+3. Missing value strategy
+- Weather: filled missing with "Unknown".
+- RoadType: filled with mode from training data.
+- Temperature:
+  - first filled by weather-group median
+  - fallback to global median if still missing.
+
+4. Binary categorical mapping
+- LargeVehicles: Allowed -> 1, Not Allowed -> 0
+- Landmarks: Yes -> 1, No -> 0
+
+5. Mixed-type preprocessing pipeline
+- Numerical columns: median imputation via SimpleImputer.
+- Categorical columns (Weather, RoadType): most-frequent imputation + OneHotEncoder(handle_unknown='ignore').
+- Combined using ColumnTransformer to create model-ready matrices.
+
+Modeling Approach
+- Train/validation split: 80/20 with random_state=42.
+- Baseline checked: RandomForestRegressor.
+- Final model: LightGBM (LGBMRegressor) with tuned practical defaults:
+  - n_estimators=1000
+  - learning_rate=0.03
+  - num_leaves=63
+  - subsample=0.9
+  - colsample_bytree=0.9
+  - random_state=42
+- Validation metrics printed in notebook:
+  - RMSE
+  - R2
+
+Inference and Submission Generation
+- Test data loaded and transformed with the same feature logic as training.
+- Applied trained preprocessor.transform(...) and lgbm_model.predict(...).
+- Created submission file with exact required schema:
+  - Column 1: Index
+  - Column 2: demand
+- Final generated file: submission_lightgbm.csv
+
+Relevant Source Files Included
+- main2.ipynb (primary workflow, preprocessing, training, inference)
+- main.py (repository python source file)
+- pyproject.toml (project dependencies/config)
+- README.md (project description)
+- submission_lightgbm.csv (generated predictions)
+- PROJECT_APPROACH.txt (this documentation)
+
+Reproducibility Notes
+- Run notebook cells in order to ensure variables/pipeline objects are initialized.
+- Ensure lightgbm is installed in the active environment before training/inference.
+- Submission output must preserve exact column names and order: Index,demand.
