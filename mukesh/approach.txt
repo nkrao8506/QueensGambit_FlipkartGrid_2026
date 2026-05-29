@@ -1,0 +1,33 @@
+Traffic Demand Prediction - Improved Approach
+
+1. Feature Engineering:
+   - Timestamp Parsing: Extracted hour, minute, total_minutes, and 15-min time_slot from timestamp.
+   - Cyclical Time Encoding: Applied sine/cosine encoding to hour and time_slot to capture periodicity.
+   - Time-of-Day Indicators: Created rush hour, night, and peak indicators.
+   - Geohash Target Encoding: Computed smoothed (Bayesian) mean, median, std, min, max, 
+     range per geohash using training data only. Applied Laplace smoothing (m=10) to prevent 
+     overfitting on low-count geohashes.
+   - Geohash-Hour Interaction: Target-encoded demand per (geohash, hour) pair for fine-grained 
+     temporal-spatial patterns.
+   - Geohash-RoadType Interaction: Captured how demand varies by road type within each location.
+   - Categorical Encoding: Binary-encoded LargeVehicles, Landmarks. Ordinal-encoded RoadType 
+     (Residential < Street < Highway). One-hot encoded Weather.
+   - Interaction Features: NumberofLanes × is_highway, high_capacity indicator, 
+     Temperature × is_highway, geo_mean × hour_sin, etc.
+   - Missing Value Handling: Filled Temperature NaNs with median. Used -1 flag for missing 
+     Weather. Filled missing RoadType as Residential (mode).
+
+2. Modeling:
+   - Ensemble of LightGBM and XGBoost with 5-fold cross validation.
+   - LightGBM: GBDT with lr=0.03, 127 leaves, 2000 trees, early stopping (50 rounds).
+   - XGBoost: Histogram-based with lr=0.03, depth=8, 2000 trees.
+   - Optimal blending weight found via grid search on OOF predictions.
+   - Best ensemble weight (LGB): 0.80
+   - OOF CV R2 Score: 0.972746 (Hackathon Score: 97.2746)
+   - Predictions clipped to [0, 1] range.
+
+3. Tools Used:
+   - Python 3
+   - pandas, numpy for data manipulation
+   - LightGBM, XGBoost for gradient boosting models
+   - scikit-learn for cross-validation and R2 metric
