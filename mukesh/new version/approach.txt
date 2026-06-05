@@ -1,0 +1,18 @@
+Traffic Demand Prediction -
+
+Key: Day-48 lag features + LightGBM/HGB ensemble + geohash lat/lon + multi-seed.
+
+1. Features (52 total):
+   - Day-48 lags: exact timestamp, hour, slot, plus geohash aggregates (mean/std/med/q25/q75/range/IQR)
+   - Day-49 LOO: leave-one-out geohash and geohash-hour means
+   - OOF target encoding for geohash
+   - Geohash decoded to lat/lon
+   - Cyclical time, road/vehicle interactions
+   - Leakage prevented by masking day-48 lags for day-48 train rows
+
+2. Models: HGB (max_leaf=255) + LGB (63 leaves) ensemble
+   - 5-fold CV + multi-seed full-train ensemble
+   - Best blend: 90% HGB + 10% LGB
+   - HGB OOF R2=0.9557, d49-only=0.9593
+
+3. Tools: Python, pandas, numpy, LightGBM, scikit-learn
